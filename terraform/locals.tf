@@ -34,3 +34,18 @@ locals {
   effective_user_groups    = length(coalesce(var.user_groups, {})) > 0 ? var.user_groups : local.default_user_groups
 }
 
+locals {
+  # ...your other locals...
+
+  # Map of custom IAM policies created in iam-policies.tf
+  custom_policy_arns = {
+    AthenaRead     = aws_iam_policy.AthenaRead.arn
+    EC2StartStop   = aws_iam_policy.EC2StartStop.arn
+    S3ReadOnly     = aws_iam_policy.S3ReadOnly.arn
+    S3ReadWrite    = aws_iam_policy.S3ReadWrite.arn
+    CloudWatchRead = aws_iam_policy.CloudWatchRead.arn
+    SupportUser    = aws_iam_policy.SupportUser.arn
+    SSMDescribe    = aws_iam_policy.SSMDescribe.arn
+    RDSReadOnly    = aws_iam_policy.RDSReadOnly.arn
+  }
+}
