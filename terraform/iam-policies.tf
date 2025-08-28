@@ -1,12 +1,9 @@
-##############################
-# Athena Read Policy
-##############################
+# Athena read-only (Glue + Athena APIs as needed)
 resource "aws_iam_policy" "AthenaRead" {
-  name        = "AthenaRead"
+  name        = "tf-AthenaRead"
   description = "Read-only access to query/list Athena and results in S3"
-
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
@@ -24,15 +21,12 @@ resource "aws_iam_policy" "AthenaRead" {
   })
 }
 
-##############################
-# EC2 Start/Stop Policy
-##############################
+# Start/Stop EC2 instances + describe
 resource "aws_iam_policy" "EC2StartStop" {
-  name        = "EC2StartStop"
+  name        = "tf-EC2StartStop"
   description = "Allow start/stop and describe EC2 instances"
-
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
@@ -48,15 +42,12 @@ resource "aws_iam_policy" "EC2StartStop" {
   })
 }
 
-##############################
-# S3 ReadOnly Policy
-##############################
+# S3 read only (bucket list + get object)
 resource "aws_iam_policy" "S3ReadOnly" {
-  name        = "S3ReadOnly"
+  name        = "tf-S3ReadOnly"
   description = "Read-only access to S3"
-
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
@@ -72,15 +63,12 @@ resource "aws_iam_policy" "S3ReadOnly" {
   })
 }
 
-##############################
-# S3 ReadWrite Policy
-##############################
+# S3 read/write (list, get, put, delete object)
 resource "aws_iam_policy" "S3ReadWrite" {
-  name        = "S3ReadWrite"
+  name        = "tf-S3ReadWrite"
   description = "Read/Write access to S3 objects"
-
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
@@ -100,24 +88,21 @@ resource "aws_iam_policy" "S3ReadWrite" {
   })
 }
 
-##############################
-# CloudWatch Read Policy
-##############################
+# CloudWatch read access
 resource "aws_iam_policy" "CloudWatchRead" {
-  name        = "CloudWatchRead"
+  name        = "tf-CloudWatchRead"
   description = "Read-only access to CloudWatch metrics/logs"
-
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
         Action   = [
           "cloudwatch:Get*",
           "cloudwatch:List*",
+          "logs:Describe*",
           "logs:Get*",
-          "logs:List*",
-          "logs:Describe*"
+          "logs:List*"
         ]
         Resource = "*"
       }
@@ -125,22 +110,20 @@ resource "aws_iam_policy" "CloudWatchRead" {
   })
 }
 
-##############################
-# Support User Policy
-##############################
+# SupportUser (typical read + support center)
 resource "aws_iam_policy" "SupportUser" {
-  name        = "SupportUser"
-  description = "Access AWS Support Center read-only"
-
+  name        = "tf-SupportUser"
+  description = "Support user read access and support center view"
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
         Action   = [
-          "support:Describe*",
-          "support:Get*",
-          "support:List*"
+          "support:*Describe*",
+          "support:*Get*",
+          "support:*List*",
+          "trustedadvisor:*"
         ]
         Resource = "*"
       }
@@ -148,15 +131,12 @@ resource "aws_iam_policy" "SupportUser" {
   })
 }
 
-##############################
-# SSM Describe Policy
-##############################
+# SSM Describe
 resource "aws_iam_policy" "SSMDescribe" {
-  name        = "SSMDescribe"
-  description = "Describe SSM managed instances and parameters"
-
+  name        = "tf-SSMDescribe"
+  description = "Describe Systems Manager managed instances and ops data"
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
@@ -171,15 +151,12 @@ resource "aws_iam_policy" "SSMDescribe" {
   })
 }
 
-##############################
-# RDS ReadOnly Policy
-##############################
+# RDS ReadOnly
 resource "aws_iam_policy" "RDSReadOnly" {
-  name        = "RDSReadOnly"
-  description = "Read-only access to RDS"
-
+  name        = "tf-RDSReadOnly"
+  description = "Read-only access to RDS APIs"
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
