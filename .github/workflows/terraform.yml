@@ -1,21 +1,25 @@
 name: Terraform Apply (IAM Users & Groups)
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
   workflow_dispatch: {}
 
 permissions:
-  id-token: write     # required for OIDC
+  id-token: write   # needed for OIDC to AWS
   contents: read
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    environment: prod   # protect with required reviewers for safety
-
+    env:
+      TF_IN_AUTOMATION: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,9 +32,10 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}   # set this secret in GitHub
-          aws-region: us-east-1                               # change if needed
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
 
+      # ---- All events: init/validate ----
       - name: Init
         working-directory: terraform
         run: terraform init
@@ -39,7 +44,9 @@ jobs:
         working-directory: terraform
         run: terraform validate
 
+      # ---- PRs: Plan only ----
       - name: Plan
+        if: github.event_name == 'pull_request'
         id: plan
         working-directory: terraform
         run: terraform plan -input=false -out=tfplan
@@ -51,7 +58,8 @@ jobs:
           name: tfplan
           path: terraform/tfplan
 
+      # ---- Push to main / manual dispatch: Apply ----
       - name: Apply (push to main or manual dispatch)
         if: github.event_name != 'pull_request'
         working-directory: terraform
-        run: terraform apply -input=false -auto-approve tfplan || terraform apply -input=false -auto-approve
+        run: terraform apply -input=false -auto-approve
