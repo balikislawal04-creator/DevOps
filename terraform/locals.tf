@@ -1,68 +1,60 @@
 locals {
-default_groups = [
-  "admins",
-  "devops",
-  "data-eng",
-  "secops",
-  "readonly",
-  "s3-rw",
-  "ec2-ops",
-  "rds-ro",
-  "cloudwatch-ro",
-  "support"
-]
+  # --- Defaults (your source of truth) ---
+  default_groups = [
+    "admins","devops","data-eng","secops","readonly",
+    "s3-rw","ec2-ops","rds-ro","cloudwatch-ro","support"
+  ]
 
+  default_users = [
+    "ade","bola","chika","dami","eni","femi","grace","habib","ife",
+    "jide","kunle","lara","mike","nike","ola","peter","queen","remi",
+    "sade","timi","uche","viktor","wale","yemi","zainab",
+    "daniel","lucky","ravi","chandrima","bisi"
+  ]
 
-default_users = [
-  "ade", "bola", "chika", "dami", "eni", "femi", "grace", "habib", "ife",
-  "jide", "kunle", "lara", "mike", "nike", "ola", "peter", "queen", "remi",
-  "sade", "timi", "uche", "viktor", "wale", "yemi", "zainab",
-  "daniel", "lucky", "ravi", "chandrima", "bisi"
-]
+  # Group -> policy identifiers (mix of managed IDs and custom IDs)
+  default_group_policies = {
+    admins        = ["AdministratorAccess"]
+    devops        = ["ReadOnlyAccess","AmazonS3FullAccess","EC2StartStop","CloudWatchReadOnlyAccess"]
+    data-eng      = ["ReadOnlyAccess","AmazonAthenaFullAccess","AmazonS3ReadOnlyAccess","CloudWatchReadOnlyAccess"]
+    secops        = ["SecurityAudit"]
+    readonly      = ["ReadOnlyAccess"]
+    s3-rw         = ["AmazonS3FullAccess"]
+    ec2-ops       = ["EC2StartStop","SSMDescribe"]
+    rds-ro        = ["AmazonRDSReadOnlyAccess"]
+    cloudwatch-ro = ["CloudWatchReadOnlyAccess"]
+    support       = ["SupportUser"]
+  }
 
-
-# Which policies each group should get (defined in iam-policies.tf)
-default_group_policies = {
-  admins         = ["AdminFull"],
-  devops         = ["ReadOnly", "S3ReadWrite", "EC2StartStop", "CloudWatchRead"],
-  data-eng       = ["ReadOnly", "AthenaRead", "S3ReadOnly", "CloudWatchRead"],
-  secops         = ["SecurityAudit"],
-  readonly       = ["ReadOnly"],
-  s3-rw          = ["S3ReadWrite"],
-  ec2-ops        = ["EC2StartStop", "SSMDescribe"],
-  rds-ro         = ["RDSReadOnly"],
-  cloudwatch-ro  = ["CloudWatchRead"],
-  support        = ["SupportUser"]
-}
-
-
-# Example membership: first 10 are devs, next 5 analysts, etc.
-
-
+  # User -> groups (everyone readonly + a few overrides)
   default_user_groups = merge(
-    { for u in ["ade","bola","chika","dami","eni","femi","grace","habib","ife","jide"] : u => ["devops"] },
-    { for u in ["kunle","lara","mike","nike","ola"] : u => ["data-eng"] },
-    { for u in ["peter","queen","remi","sade","timi"] : u => ["ec2-ops"] },
-    { for u in ["uche","viktor","wale","yemi","zainab"] : u => ["s3-rw"] },
-    { for u in ["daniel","lucky","ravi","chandrima"] : u => ["secops"] },
-    { for u in ["bisi"] : u => ["admins"] }
+    { for u in local.default_users : u => ["readonly"] },
+    {
+      ade   = ["admins"]
+      bola  = ["devops"]
+      femi  = ["secops"]
+      lucky = ["devops"]
+      ravi  = ["secops"]
+      bisi  = ["support"]
+    }
   )
-}
 
-
-# Wire locals to variables unless you override them via tfvars
-
-
-# (You can also pass your own via *.tfvars files.)
-# Note: do not declare variables again; use 'locals_as_vars' pattern.
-# Wire locals to variables unless you override them via tfvars
-
-
-# (You can also pass your own via *.tfvars files.)
-# Note: do not declare variables again; use 'locals_as_vars' pattern.
-locals {
+  # --- Effective values (variables can override, but you prefer locals) ---
   effective_groups         = coalesce(var.groups, local.default_groups)
-  effective_users          = coalesce(var.users, local.default_users)
+  effective_users          = coalesce(var.users,  local.default_users)
   effective_group_policies = length(var.group_policies) > 0 ? var.group_policies : local.default_group_policies
-  effective_user_groups    = length(var.user_groups) > 0 ? var.user_groups : local.default_user_groups
+  effective_user_groups    = length(var.user_groups)    > 0 ? var.user_groups    : local.default_user_groups
+
+  # AWS managed policy ARNs keyed by their friendly identifiers
+  managed_policy_arns = {
+    AdministratorAccess        = "arn:aws:iam::aws:policy/AdministratorAccess"
+    ReadOnlyAccess             = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+    SecurityAudit              = "arn:aws:iam::aws:policy/SecurityAudit"
+    AmazonS3ReadOnlyAccess     = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+    AmazonS3FullAccess         = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+    AmazonRDSReadOnlyAccess    = "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
+    CloudWatchReadOnlyAccess   = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
+    AmazonAthenaFullAccess     = "arn:aws:iam::aws:policy/AmazonAthenaFullAccess"
+  }
 }
+
