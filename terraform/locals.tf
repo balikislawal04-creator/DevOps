@@ -1,15 +1,8 @@
 locals {
+  # Already defined (you should have these from before)
   default_groups = [
-    "admins",
-    "devops",
-    "data-eng",
-    "secops",
-    "readonly",
-    "s3-rw",
-    "ec2-ops",
-    "rds-ro",
-    "cloudwatch-ro",
-    "support"
+    "admins", "devops", "data-eng", "secops", "readonly",
+    "s3-rw", "ec2-ops", "rds-ro", "cloudwatch-ro", "support"
   ]
 
   default_users = [
@@ -20,21 +13,32 @@ locals {
   ]
 
   default_group_policies = {
-    admins       = ["AdministratorAccess"]
-    devops       = ["ReadOnlyAccess", "S3ReadWrite", "EC2StartStop", "CloudWatchRead"]
-    data-eng     = ["SecurityAudit"]
-    secops       = ["ReadOnlyAccess"]
-    readonly     = ["ReadOnlyAccess"]
-    s3-rw        = ["S3ReadWrite"]
-    ec2-ops      = ["EC2StartStop", "SSMDescribe"]
-    rds-ro       = ["RDSReadOnlyAccess"]
+    admins        = ["AdministratorAccess"]
+    devops        = ["ReadOnlyAccess", "S3ReadWrite", "EC2StartStop", "CloudWatchRead"]
+    data-eng      = ["SecurityAudit"]
+    secops        = ["ReadOnlyAccess"]
+    readonly      = ["ReadOnlyAccess"]
+    s3-rw         = ["S3ReadWrite"]
+    ec2-ops       = ["EC2StartStop", "SSMDescribe"]
+    rds-ro        = ["RDSReadOnlyAccess"]
     cloudwatch-ro = ["CloudWatchReadOnlyAccess"]
-    support      = ["SupportUser"]
+    support       = ["SupportUser"]
   }
 
-  # 🔹 Add these computed locals
+  # 🔹 Add these computed locals (fixes your previous error)
   effective_groups         = length(var.groups) > 0 ? var.groups : local.default_groups
   effective_users          = length(var.users) > 0 ? var.users : local.default_users
   effective_group_policies = length(var.group_policies) > 0 ? var.group_policies : local.default_group_policies
+
+  # 🔹 Add missing effective_user_groups
+  effective_user_groups = length(var.user_groups) > 0 ? var.user_groups : {}
+
+  # 🔹 Add missing custom_policy_arns (map for inline/custom policies)
+  custom_policy_arns = {
+    S3ReadOnly  = aws_iam_policy.S3ReadOnly.arn
+    S3ReadWrite = aws_iam_policy.S3ReadWrite.arn
+    EC2StartStop = aws_iam_policy.EC2StartStop.arn
+    AthenaRead  = aws_iam_policy.AthenaRead.arn
+  }
 }
 
