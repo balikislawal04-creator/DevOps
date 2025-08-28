@@ -1,28 +1,17 @@
 locals {
-  # --------------------------
-  # Defaults (edit as you like)
-  # --------------------------
+  # Default groups and users
   default_groups = [
-    "admins",
-    "devops",
-    "data-eng",
-    "secops",
-    "readonly",
-    "s3-rw",
-    "ec2-ops",
-    "rds-ro",
-    "cloudwatch-ro",
-    "support",
+    "admins", "devops", "data-eng", "secops", "readonly",
+    "s3-rw", "ec2-ops", "rds-ro", "cloudwatch-ro", "support"
   ]
 
   default_users = [
     "ade","bola","chika","dami","eni","femi","grace","habib","ife",
     "jide","kunle","lara","mike","nike","ola","peter","queen","remi",
     "sade","timi","uche","viktor","wale","yemi","zainab",
-    "daniel","lucky","ravi","chandrima","bisi",
+    "daniel","lucky","ravi","chandrima","bisi"
   ]
 
-  # Which policies each group should get (policy names must match what you define in iam-policies.tf)
   default_group_policies = {
     admins         = ["AdminFull"]
     devops         = ["ReadOnly", "S3ReadWrite", "EC2StartStop", "CloudWatchRead"]
@@ -36,31 +25,12 @@ locals {
     support        = ["SupportUser"]
   }
 
-  # Optional: map of group => list(users). Keep empty unless you want to pre-wire memberships.
   default_user_groups = {}
 
-  # Declare but leave empty unless you need to reference extra policy ARNs here.
-  # (Do NOT duplicate managed_policy_arns here if you already define them in iam-policies.tf)
-  custom_policy_arns = {}
-
-  # --------------------------
-  # Effective values (null-safe)
-  # --------------------------
-  effective_groups = (
-    var.groups == null || length(var.groups) == 0
-  ) ? local.default_groups : var.groups
-
-  effective_users = (
-    var.users == null || length(var.users) == 0
-  ) ? local.default_users : var.users
-
-  effective_group_policies = (
-    var.group_policies == null || length(var.group_policies) == 0
-  ) ? local.default_group_policies : var.group_policies
-
-  # map(string => list(string)) like { "admins" = ["ade","bola"], "readonly" = ["…"] }
-  effective_user_groups = (
-    var.user_groups == null || length(var.user_groups) == 0
-  ) ? local.default_user_groups : var.user_groups
+  # Fix → wrap with coalesce()
+  effective_groups        = length(coalesce(var.groups, [])) > 0 ? var.groups : local.default_groups
+  effective_users         = length(coalesce(var.users, [])) > 0 ? var.users : local.default_users
+  effective_group_policies = length(coalesce(var.group_policies, {})) > 0 ? var.group_policies : local.default_group_policies
+  effective_user_groups    = length(coalesce(var.user_groups, {})) > 0 ? var.user_groups : local.default_user_groups
 }
 
