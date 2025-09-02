@@ -1,157 +1,96 @@
-IAM Runbook – Automating User, Group, and Access Requests
+🚀 IAM Runbook: Automating Users, Groups, and Access Requests
 📌 Purpose
 
 This runbook provides a standardized process for handling IAM access requests in AWS using Terraform + GitHub Actions.
-It ensures changes are:
+It ensures all changes are:
 
-Automated
+✅ Automated
 
-Version-controlled
+✅ Version-controlled
 
-Auditable (via PRs and tickets)
+✅ Auditable (via PRs and tickets)
 
-✅ Pre-requisites
+⚙️ Pre-requisites
 
-AWS IAM Role with GitHub OIDC trust (TerraformDeployRole)
+Before using this runbook, make sure you have:
 
-Terraform project set up in GitHub (iam-users.tf, iam-group.tf, variables.tf, locals.tf)
+An AWS IAM Role with GitHub OIDC trust (e.g., TerraformDeployRole).
 
-GitHub Actions workflow (terraform.yml) configured:
+A Terraform project set up in GitHub (files: iam-users.tf, iam-group.tf, variables.tf, locals.tf).
 
-plan runs on PR
+A GitHub Actions workflow (terraform.yml) configured to run Terraform on PR and merge to main.
 
-apply runs on merge to main
+📝 Workflow Overview
 
-🔹 Workflow
-1. New User Request
+🔄 PR workflow → Terraform plan runs automatically.
 
+✅ Merge to main → Terraform apply runs automatically.
+
+🛡️ All changes are audited and approved via pull requests.
+
+👤 New User Request
 Steps:
 
 Open variables.tf.
 
-Add user to the users list:
+Add the new user under variable "users". Example:
 
 variable "users" {
   default = [
     "alice",
-    "bob",
-    "newuser"   # <-- add here
+    "bob"
   ]
 }
 
 
-Assign groups in the user_groups map:
+Commit your changes and open a Pull Request.
 
-variable "user_groups" {
-  default = {
-    alice   = ["readonly"]
-    bob     = ["devops"]
-    newuser = ["s3-rw"]
-  }
+GitHub Actions will run terraform plan → review in PR.
+
+Merge to main → GitHub Actions applies changes automatically.
+
+🎉 User is created in AWS IAM.
+
+👥 Add User to Group
+Steps:
+
+Open locals.tf.
+
+Add the user → group mapping under effective_group_policies. Example:
+
+effective_group_policies = {
+  "admins" = ["alice"]
+  "devops" = ["bob"]
 }
 
 
-Commit to a feature branch:
+Commit changes and raise a Pull Request.
 
-git checkout -b feature/add-newuser
-git add variables.tf
-git commit -m "Add newuser to users and s3-rw group (Ticket #1234)"
-git push origin feature/add-newuser
+Once approved and merged, the pipeline attaches the policies.
 
-
-Open PR → Review → Merge.
-
-GitHub Actions auto-applies → user created + added to group.
-
-2. New Group Request
-
+📂 Add a New Group
 Steps:
 
-Edit locals.tf.
+Open locals.tf and define the new group. Example:
 
-Add group name under default_groups:
-
-default_groups = [
+effective_groups = [
   "admins",
   "devops",
-  "readonly",
-  "s3-rw",
-  "newgroup"   # <-- added
+  "support",
+  "cloudwatch-ro"
 ]
 
 
-Add policies for the new group:
+Commit changes and raise a Pull Request.
 
-default_group_policies = {
-  newgroup = ["ReadOnlyAccess", "S3ReadOnly"]
-}
+After merge, the group is created in AWS with defined policies.
 
+✅ Best Practices
 
-Commit → PR → Merge → Terraform applies.
+Always work in a feature branch → PR → Merge.
 
-New group + policies available in AWS IAM.
+Double-check the Terraform Plan before merging.
 
-3. Access Request (Add User to Group)
+Never apply directly from local without review.
 
-Steps:
-
-Edit variables.tf → update user_groups map:
-
-variable "user_groups" {
-  default = {
-    alice   = ["readonly"]
-    bob     = ["devops"]
-    newuser = ["s3-rw", "newgroup"]   # <-- updated
-  }
-}
-
-
-Commit → PR → Merge → Terraform applies.
-
-User membership updated automatically.
-
-🔍 Verification
-
-After deployment, verify access in AWS:
-
-CLI:
-
-aws iam list-groups-for-user --user-name newuser
-
-
-Console:
-IAM → Users → newuser → Groups tab.
-
-🔄 Rollback
-
-To revert:
-
-Remove the user/group mapping in Terraform (variables.tf or locals.tf).
-
-Commit → PR → Merge.
-
-Terraform will remove memberships or groups automatically.
-
-🚀 Automation Enhancements (Future)
-
-Self-service input file: Maintain users.yaml mapping users → groups, parse in GitHub Actions.
-
-Workflow dispatch: Allow security engineers to run workflow with inputs (username, groups) without editing code.
-
-Ticket integration (ServiceNow/Jira): On ticket approval, auto-trigger PR with changes.
-
-📖 Example Ticket Flow
-
-User requests access via ticket.
-
-Security engineer verifies approval.
-
-Engineer updates Terraform (users, groups, user_groups).
-
-PR created referencing ticket ID.
-
-Merge after review → GitHub Actions apply.
-
-Engineer verifies in AWS → ticket closed.
-
-✅ This runbook standardizes IAM access requests with automation, reviews, and audit trails.
+Keep the runbook updated as new groups/policies are added.
