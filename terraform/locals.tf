@@ -16,7 +16,12 @@ locals {
   ]
 
   # No default users/user_groups required for validation to pass
-  default_users       = []
+  default_users       = [
+    "Biola",
+    "Bisi",
+    "Bola",
+    "Mayo",
+  ]
   default_user_groups = {}
 
   # Which policies each group should receive (policy *identifiers*)
